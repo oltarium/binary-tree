@@ -19,7 +19,7 @@ class BinaryTree {
      * @param data - adding value
      */
     insert(data) {
-        if (data != null && data !== void 0 && !this.contains(data)) {
+        if (data && !this.contains(data)) {
             if (this.root == null) {
                 this.root = new Node(data, null, null);
             }
@@ -59,10 +59,7 @@ class BinaryTree {
      * @returns {boolean} return true - if value is exist in the tree and return false - if no exist value in the tree
      */
     contains(data) {
-        if (data == null) {
-            data = 0;
-        }
-        if (data === void 0) {
+        if (!data) {
             return false;
         }
         var found = false, current = this.root;
@@ -190,7 +187,7 @@ class BinaryTree {
      * @returns {*} - node or null
      */
     findNode(data) {
-        if (data === void 0) {
+        if (!data) {
             return null;
         }
         var current = this.root;
@@ -250,4 +247,37 @@ class BinaryTree {
         return false;
     }
 
+    /**
+     * Go through all tree
+     *
+     */
+    traverse() {
+        var current, pre;
+        if (this.root == null) {
+            return;
+        }
+        current = this.root;
+        while (current != null) {
+            if (current.left == null) {
+                console.log(current.data);
+                current = current.right;
+            } else {
+                pre = current.left;
+                while (pre.right != null && pre.right != current) {
+                    pre = pre.right;
+                }
+                if (pre.right == null) {
+                    pre.right = current;
+                    current = current.left;
+                }
+                else {
+                    pre.right = null;
+                    console.log(current.data);
+                    current = current.right;
+                }
+
+            }
+
+        }
+    }
 }
