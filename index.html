@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Client</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .container {
+            width: 400px;
+
+            background-color: #c5c5c5;
+            margin: 0 auto;
+        }
+
+        * {
+            margin-top: 10px;
+        }
+
+        .auth {
+            margin-top: 20px;
+            background-color: aquamarine;
+        }
+
+        textarea {
+            width: 100%;
+            display: block;
+        }
+    </style>
+    <script>
+        var socket;
+        var auth_key;
+        var dimensionArray;
+        var arraydata;
+        var resultArray;
+        function connect() {
+            var url = "ws://198.199.125.240";
+           //var url = 'ws://localhost:8087/';
+            socket = new WebSocket(url);
+            socket.binaryType = 'arraybuffer';
+            socket.onopen = function () {
+                console.log('SUCCESS CONNECTION TO SERVER');
+            };
+            socket.onmessage = function (event) {
+                if (typeof  event.data === 'string') {
+                    try{
+                        var message = JSON.parse(event.data);
+                        switch (message.msg) {
+                            case 'auth':
+                            {
+                                console.log(event.data);
+                                auth_key = message.auth_token;
+                                var n = document.getElementById('code');
+                                n.value = message.auth_token;
+                                n = document.getElementById('auth_key');
+                                n.value = auth_key;
+                                break;
+                            }
+                            case 'compute':
+                            {
+                                console.log(event.data);
+                                n = document.getElementById('first_task_responce');
+                                n.value = event.data;
+                                break;
+                            }
+                            case 'binary_sum':
+                            {
+                                dimensionArray = message.bits;
+                                console.log(event.data);
+                                document.getElementById('task2').value = event.data;
+                                break;
+                            }
+                            default:{
+                                console.log(event.data);
+                            }
+                        }
+                    }catch (e){}
+                }else{
+                    if(event.data instanceof ArrayBuffer) {
+                        var bytearray;
+                        if(dimensionArray ===8){
+                            bytearray = new Uint8Array(event.data);
+                        }
+                        if(dimensionArray===16){
+                            bytearray = new Uint16Array(event.data);
+                        }
+                        arraydata = bytearray;
+                        var res = 0;
+                        for(var i =0;i<arraydata.length;i++){
+                            console.log(arraydata[i]);
+                            res+=arraydata[i];
+                        }
+                        resultArray = res;
+                        console.log("RESULT SUM ARRAY IS "+res);
+                        document.getElementById('task2result').value = res;
+                    }
+                }
+            };
+            socket.onerror = function (error) {
+                console.log("Ошибка " + error.message);
+            };
+            socket.onclose = function (event) {
+                if (event.wasClean) {
+                    console.log('Соединение закрыто чисто');
+                }
+            };
+        }
+        function sendiName() {
+          //  var n = document.getElementById('name').value;
+            var m = {msg: 'challenge_accepted', name: "oltarium"};
+            socket.send(JSON.stringify(m));
+        }
+        function sendFirstTaskRequest() {
+            var m = {msg: 'task_one', auth_token: auth_key};
+            socket.send(JSON.stringify(m));
+        }
+        function sendFirstTaskAnswer() {
+
+            var m = {
+                msg: 'task_one_result',
+                result: parseInt(document.getElementById('result_forst_task').value),
+                auth_token: auth_key
+            };
+            socket.send(JSON.stringify(m));
+        }
+        function sendSecretWord() {
+            var secret = document.getElementById('secret').value;
+            var m = {msg: secret, auth_token: auth_key};
+            socket.send(JSON.stringify(m));
+        }
+
+        function sendTaskTwoResult() {
+          var m = {msg:'task_two_result',result:resultArray,auth_token:auth_key};
+            socket.send(JSON.stringify(m));
+        }
+    </script>
+    <script>
+
+    </script>
+</head>
+<body>
+<div class="container">
+    <button onclick="connect()"> Connect to Server</button>
+    <div class="auth">
+        <label for="name"> Enter name:</label>
+        <input type="text" id="name" value="oltarium">
+        <button onclick="sendiName()"> SEND NAME</button>
+    </div>
+    <label>My auth key is</label>
+    <textarea id="code"></textarea>
+
+    <div class="task1">
+        <label for="auth_key">Enter auth</label>
+        <input type="text" id="auth_key">
+        <button onclick="sendFirstTaskRequest()"> Send first task request</button>
+        <label>My First Task is : </label>
+        <textarea id="first_task_responce"></textarea>
+        <label for="result_forst_task"> Enter answer :</label>
+        <input type="text" id="result_forst_task">
+        <button onclick="sendFirstTaskAnswer()">Send my answer to server</button>
+    </div> n
+    <label>Enter secret message</label>
+    <input type="text" id="secret">
+    <button onclick="sendSecretWord()">Send secret word</button>
+    <label>TASK 2</label>
+    <textarea id="task2"></textarea>
+    <label>Task 2 result is </label>
+    <input type="text" id="task2result">
+    <button onclick="sendTaskTwoResult()">TASK 2 SEND ANSWER</button>
+</div>
+
+</body>
+</html>
